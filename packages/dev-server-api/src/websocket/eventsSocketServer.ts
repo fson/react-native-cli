@@ -3,7 +3,7 @@ import {logger} from '@react-native-community/cli-tools';
 import prettyFormat from 'pretty-format';
 import {Server as HttpServer} from 'http';
 import {Server as HttpsServer} from 'https';
-import messageSocketModule from './messageSocket';
+import messageSocketModule from './messageSocketServer';
 
 /**
  * The eventsSocket websocket listens at the 'events/` for websocket

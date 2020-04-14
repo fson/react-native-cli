@@ -6,7 +6,7 @@
  */
 import http from 'http';
 
-export default function getSecurityHeadersMiddleware(
+export default function securityHeadersMiddleware(
   req: http.IncomingMessage,
   res: http.ServerResponse,
   next: (err?: any) => void,
