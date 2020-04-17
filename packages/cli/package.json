@@ -32,6 +32,7 @@
     "@react-native-community/cli-debugger-ui": "^4.7.0",
     "@react-native-community/cli-tools": "^4.7.0",
     "@react-native-community/cli-types": "^4.7.0",
+    "@react-native-community/dev-server-api": "^4.7.0",
     "chalk": "^3.0.0",
     "command-exists": "^1.2.8",
     "commander": "^2.19.0",
