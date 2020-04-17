@@ -9,7 +9,7 @@
 
 import ws from 'ws';
 import {logger} from '@react-native-community/cli-tools';
-import {Server as HttpServer} from 'http';
+import {Server as HttpServer, IncomingMessage} from 'http';
 import {Server as HttpsServer} from 'https';
 
 type Server = HttpServer | HttpsServer;
@@ -48,11 +48,10 @@ function attachToServer(server: Server, path: string) {
     send(debuggerSocket, JSON.stringify({method: '$disconnected'}));
   };
 
-  wss.on('connection', (connection: ws) => {
-    // @ts-ignore current definition of ws does not have upgradeReq type
-    const {url} = connection.upgradeReq;
+  wss.on('connection', (connection: ws, req: IncomingMessage) => {
+    const {url} = req;
 
-    if (url.indexOf('role=debugger') > -1) {
+    if (url && url.indexOf('role=debugger') > -1) {
       if (debuggerSocket) {
         connection.close(1011, 'Another debugger is already connected');
         return;
@@ -63,7 +62,7 @@ function attachToServer(server: Server, path: string) {
         debuggerSocket.onclose = debuggerSocketCloseHandler;
         debuggerSocket.onmessage = ({data}) => send(clientSocket, data);
       }
-    } else if (url.indexOf('role=client') > -1) {
+    } else if (url && url.indexOf('role=client') > -1) {
       if (clientSocket) {
         // @ts-ignore not nullable with current type definition of ws
         clientSocket.onerror = null;

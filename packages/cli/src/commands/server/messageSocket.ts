@@ -6,10 +6,11 @@
  */
 
 import url from 'url';
-import {Server as WebSocketServer} from 'ws';
+import WebSocket, {Server as WebSocketServer} from 'ws';
 import {logger} from '@react-native-community/cli-tools';
-import {Server as HttpServer} from 'http';
+import {Server as HttpServer, IncomingMessage} from 'http';
 import {Server as HttpsServer} from 'https';
+import {ParsedUrlQuery} from 'querystring';
 
 const PROTOCOL_VERSION = 2;
 
@@ -76,17 +77,17 @@ function attachToServer(server: Server, path: string) {
     server,
     path,
   });
-  const clients = new Map();
+  const clients = new Map<string, {ws: WebSocket; url: string}>();
   let nextClientId = 0;
 
   function getClientWs(clientId: string) {
-    const clientWs = clients.get(clientId);
-    if (clientWs === undefined) {
+    const client = clients.get(clientId);
+    if (client === undefined) {
       throw new Error(
         `could not find id "${clientId}" while forwarding request`,
       );
     }
-    return clientWs;
+    return client.ws;
   }
 
   function handleSendBroadcast(
@@ -105,10 +106,10 @@ function attachToServer(server: Server, path: string) {
         }" to all React Native apps failed. Make sure your app is running in the simulator or on a phone connected via USB.`,
       );
     }
-    for (const [otherId, otherWs] of clients) {
+    for (const [otherId, other] of clients) {
       if (otherId !== broadcasterId) {
         try {
-          otherWs.send(JSON.stringify(forwarded));
+          other.ws.send(JSON.stringify(forwarded));
         } catch (e) {
           logger.error(
             `Failed to send broadcast to client: '${otherId}' ` +
@@ -119,7 +120,10 @@ function attachToServer(server: Server, path: string) {
     }
   }
 
-  wss.on('connection', clientWs => {
+  wss.on('connection', (clientWs: WebSocket, req: IncomingMessage) => {
+    if (!req.url) {
+      return;
+    }
     const clientId = `client#${nextClientId++}`;
 
     function handleCaughtError(message: Message, error: Error) {
@@ -163,12 +167,13 @@ function attachToServer(server: Server, path: string) {
           result = clientId;
           break;
         case 'getpeers':
-          result = {};
-          clients.forEach((otherWs, otherId) => {
-            if (clientId !== otherId) {
-              result[otherId] = url.parse(otherWs.upgradeReq.url, true).query;
+          const peers: {[id: string]: ParsedUrlQuery} = {};
+          clients.forEach((otherClient, otherId) => {
+            if (clientId !== otherId && otherClient.url) {
+              peers[otherId] = url.parse(otherClient.url, true).query;
             }
           });
+          result = peers;
           break;
         default:
           throw new Error(`unknown method: ${message.method}`);
@@ -211,7 +216,7 @@ function attachToServer(server: Server, path: string) {
       );
     }
 
-    clients.set(clientId, clientWs);
+    clients.set(clientId, {ws: clientWs, url: req.url as string});
     const onCloseHandler = () => {
       // @ts-ignore
       clientWs.onmessage = null;
