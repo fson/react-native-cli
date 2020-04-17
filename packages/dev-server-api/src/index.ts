@@ -4,7 +4,6 @@ import {Server as HttpsServer} from 'https';
 import compression from 'compression';
 import connect from 'connect';
 import errorhandler from 'errorhandler';
-import serveStatic from 'serve-static';
 import {debuggerUIMiddleware} from '@react-native-community/cli-debugger-ui';
 
 import devToolsMiddleware from './devToolsMiddleware';
@@ -59,11 +58,6 @@ export function createDevServerMiddleware(options: MiddlewareOptions) {
       res.end('OK');
     })
     .use(errorhandler());
-
-  options.watchFolders.forEach(folder => {
-    // @ts-ignore mismatch between express and connect middleware types
-    middleware.use(serveStatic(folder));
-  });
 
   return {
     attachToServer(server: HttpServer | HttpsServer) {
