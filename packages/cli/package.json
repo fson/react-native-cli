@@ -54,11 +54,9 @@
     "minimist": "^1.2.0",
     "mkdirp": "^0.5.1",
     "node-stream-zip": "^1.9.1",
-    "open": "^6.2.0",
     "ora": "^3.4.0",
     "pretty-format": "^25.2.0",
     "semver": "^6.3.0",
-    "shell-quote": "1.6.1",
     "strip-ansi": "^5.2.0",
     "sudo-prompt": "^9.0.0",
     "wcwidth": "^1.0.1"
